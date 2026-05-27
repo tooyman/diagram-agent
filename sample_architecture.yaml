@@ -1,0 +1,67 @@
+# Acme Integration Architecture Metadata Sample
+title: "NLEADS - Real-time Integration Architecture"
+
+environments:
+  - id: acme_aws
+    name: "Acme AWS"
+    style: "yellow dashed border, light background"
+  - id: on_prem
+    name: "On-Premise"
+    style: "grey solid border, light background"
+  - id: partner_third_party
+    name: "Partner / 3rd Party"
+    style: "purple solid border, light background"
+
+components:
+  - id: mobile_app
+    name: "Mobile App"
+    environment: acme_aws
+    lifecycle_status: "unchanged" # black border
+    type: "channel"
+  - id: web_app
+    name: "Web Portal"
+    environment: acme_aws
+    lifecycle_status: "unchanged" # black border
+    type: "channel"
+  - id: eapi
+    name: "EAPI"
+    environment: acme_aws
+    lifecycle_status: "updated" # blue border, yellow fill background
+    type: "integration_gateway"
+  - id: core_banking
+    name: "Core Banking Processor"
+    environment: on_prem
+    lifecycle_status: "new" # purple border
+    type: "core_processor"
+  - id: mainframe
+    name: "Legacy Mainframe"
+    environment: on_prem
+    lifecycle_status: "unchanged" # black border
+    type: "mainframe"
+  - id: partner_gw
+    name: "Partner API Gateway"
+    environment: partner_third_party
+    lifecycle_status: "unchanged" # black border
+    type: "external_gateway"
+
+connections:
+  - from: mobile_app
+    to: eapi
+    protocol: "REST"
+    status: "existing" # black line
+  - from: web_app
+    to: eapi
+    protocol: "REST"
+    status: "existing" # black line
+  - from: eapi
+    to: core_banking
+    protocol: "SOAP"
+    status: "new" # purple/red line
+  - from: eapi
+    to: mainframe
+    protocol: "MQ"
+    status: "updated" # blue line
+  - from: eapi
+    to: partner_gw
+    protocol: "REST"
+    status: "existing" # black line

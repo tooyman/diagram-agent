@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skill: Acme Integration Flow SVG Diagram Agent (Vision-to-Vector)</title>
+    <style>
+        :root {
+            --primary-color: #4A2E80;
+            --accent-color: #7D3C98;
+            --bg-color: #fcfcfd;
+            --text-color: #2c3e50;
+            --border-color: #dcdde1;
+            --code-bg: #f8f9fa;
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            padding: 40px 20px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1, h2, h3 {
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+        h1 {
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+            font-size: 2.2rem;
+            margin-top: 0;
+        }
+        h2 {
+            font-size: 1.5rem;
+            margin-top: 30px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        hr {
+            border: 0;
+            border-top: 1px solid var(--border-color);
+            margin: 30px 0;
+        }
+        p {
+            margin: 15px 0;
+        }
+        ul, ol {
+            margin: 15px 0;
+            padding-left: 25px;
+        }
+        li {
+            margin: 8px 0;
+        }
+        code {
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+            background-color: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #d63031;
+        }
+        pre {
+            background-color: var(--code-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+            border-radius: 0;
+            color: #2d3436;
+            font-size: 0.95em;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            font-size: 0.95em;
+        }
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 12px 15px;
+            text-align: left;
+        }
+        th {
+            background-color: #f1f2f6;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .header-meta {
+            font-size: 0.9em;
+            color: #7f8c8d;
+            background: #f1f2f6;
+            padding: 15px 20px;
+            border-radius: 6px;
+            margin-bottom: 30px;
+        }
+        .header-meta p {
+            margin: 5px 0;
+        }
+        .header-meta strong {
+            color: var(--primary-color);
+        }
+        .prompt-block {
+            border-left: 4px solid var(--accent-color);
+        }
+        .config-block {
+            border-left: 4px solid #2ecc71;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-meta">
+        <p><strong>Name:</strong> integration-flow-svg</p>
+        <p><strong>Description:</strong> Translates Acme enterprise architecture YAML metadata into a professional, scalable 2D vector SVG diagram by using a vision-capable subagent to vectorize a pre-rendered PNG diagram.</p>
+    </div>
+
+    <h1>Skill: Acme Integration Flow SVG Diagram Agent (Vision-to-Vector)</h1>
+    <p>This skill enables the main agent to delegate the vectorization of pre-rendered PNG diagrams to a specialized, vision-capable subagent (<code>svg_vectorizer</code>) configured to run on the user's preferred flagship reasoning model.</p>
+
+    <hr>
+
+    <h2>1. User Setup: Model Override Configuration</h2>
+    <p>To ensure vision vectorization and SVG code design run on your preferred model (e.g., <code>gemini-3.1-pro</code>), you must configure the model override at the workspace scope or global user scope:</p>
+    
+    <h3>Option A: Workspace Scope (Self-Contained & Git-Sharable)</h3>
+    <p>Add the override in your project-level settings.json:</p>
+    <pre class="config-block"><code>{
+  "agents": {
+    "overrides": {
+      "svg_vectorizer": {
+        "modelConfig": {
+          "model": "gemini-3.1-pro"
+        }
+      }
+    }
+  }
+}</code></pre>
+
+    <hr>
+
+    <h2>2. Main Agent Playbook</h2>
+    <p>When the user triggers <code>/integration-flow-svg &lt;metadata.yaml&gt; [output_image_name.svg]</code>, the main agent must follow this protocol:</p>
+    <ol>
+        <li><strong>Verify or Generate PNG</strong>:
+            <ul>
+                <li>Check if a corresponding PNG diagram (<code>generated_diagrams/[output_image_name].png</code>) exists in the workspace.</li>
+                <li>If it does not exist, trigger the PNG diagram skill (<code>integration-flow</code>) first to generate the visually optimized PNG.</li>
+            </ul>
+        </li>
+        <li><strong>Define Subagent</strong>: Call <code>define_subagent</code> to define the vision subagent:
+            <ul>
+                <li><strong>Name</strong>: <code>svg_vectorizer</code></li>
+                <li><strong>Description</strong>: "Enterprise architecture vision-to-vector SVG diagram compiler."</li>
+                <li><strong>enable_write_tools</strong>: <code>true</code></li>
+                <li><strong>enable_mcp_tools</strong>: <code>false</code></li>
+                <li><strong>System Prompt</strong>: Set this to the Subagent System Prompt detailed in Section 3 below.</li>
+            </ul>
+        </li>
+        <li><strong>Invoke Subagent</strong>: Call <code>invoke_subagent</code> with the prompt passing the parsed YAML content and output file name.</li>
+        <li><strong>Await & Report</strong>: Wait for the subagent to report that the SVG file has been finalized and verified. Then, present the final output path to the user.</li>
+    </ol>
+
+    <hr>
+
+    <h2>3. Subagent System Prompt (svg_vectorizer)</h2>
+    <p>The <code>svg_vectorizer</code> subagent must adhere to the following core system prompt to generate the SVG diagram:</p>
+
+    <h3>3.1. SVG Styling & Defs Template (CRITICAL)</h3>
+    <p>Your generated SVG must be a valid, self-contained XML document. Use this standard structure:</p>
+    <pre class="prompt-block"><code>&lt;svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1300" width="100%" height="100%"&gt;
+  &lt;defs&gt;
+    &lt;!-- Arrow marker for existing/black lines --&gt;
+    &lt;marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"&gt;
+      &lt;path d="M 0 0 L 10 5 L 0 10 z" fill="#333" /&gt;
+    &lt;/marker&gt;
+    &lt;!-- Arrow marker for new/purple lines --&gt;
+    &lt;marker id="arrow-new" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"&gt;
+      &lt;path d="M 0 0 L 10 5 L 0 10 z" fill="#7D3C98" /&gt;
+    &lt;/marker&gt;
+  &lt;/defs&gt;
+  &lt;style&gt;
+    .title { font-family: 'Inter', sans-serif; font-size: 24px; font-weight: bold; fill: #4A2E80; }
+    .legend-text { font-family: 'Inter', sans-serif; font-size: 12px; fill: #333; }
+    .zone-title { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: bold; fill: #4A2E80; }
+    .node-text { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: bold; fill: #2c3e50; text-anchor: middle; }
+    .conn-text { font-family: 'Inter', sans-serif; font-size: 10px; fill: #555; text-anchor: middle; font-weight: bold; }
+  </style>
+  
+  &lt;!-- Content goes here --&gt;
+&lt;/svg&gt;</code></pre>
+
+    <h3>3.2. Layout & Coordinate Calculation Rules</h3>
+    <p>You must dynamically calculate the layout coordinate grid to prevent overlaps, keep lines orthogonal, and avoid crossings:</p>
+    <ul>
+        <li><strong>Columns and Gaps Layout</strong>:
+            <ul>
+                <li><strong>Column 1</strong>: Channels and Clients (x: 50 - 230).</li>
+                <li><strong>Column Gap 1 (x: 230 - 250)</strong>: Keep clear for vertical routing of channel lines.</li>
+                <li><strong>Column 2</strong>: Acme Azure (x: 250 - 630).</li>
+                <li><strong>Column Gap 2 (x: 630 - 740)</strong>: Keep clear for vertical descending lines from NLEADS/Azure.</li>
+                <li><strong>Column 3</strong>: On-Premise (x: 740 - 1560).</li>
+                <li><strong>Column Gap 3 (x: 1335 - 1380)</strong>: Keep clear for vertical descending lines to Depts/MCS and Verification Grid.</li>
+            </ul>
+        </li>
+        <li><strong>Nesting</strong>: Ensure child group container rectangles are drawn first, and their nested nodes are positioned entirely inside them.</li>
+        <li><strong>Component Shapes</strong>:
+            <ul>
+                <li><strong>Databases</strong>: Render as a 2D cylinder path (ellipse top, rectangle body, curved bottom).</li>
+                <li><strong>General servers/gateways</strong>: Rectangles (rx="4" ry="4" for rounded corners).</li>
+            </ul>
+        </li>
+        <li><strong>Color Palettes</strong>:
+            <ul>
+                <li><strong>Unchanged systems</strong>: white fill (#ffffff), black border (#333333).</li>
+                <li><strong>Updated systems</strong>: yellow fill (#ffeaa7), blue border (#0984e3).</li>
+                <li><strong>New systems</strong>: white fill (#ffffff), purple border (#7d3c98).</li>
+                <li><strong>Gateways / Brokers</strong>: yellow fill (#ffeaa7).</li>
+            </ul>
+        </li>
+    </ul>
+
+    <h3>3.3. Connection Routing Constraints</h3>
+    <ul>
+        <li>All connections must use 90-degree orthogonal paths.</li>
+        <li><strong>Corridor Routing (Highways)</strong>: Use horizontal corridors to group cross-column lines:
+            <ul>
+                <li><strong>Upper Corridor (y: 10 - 50)</strong>: For top-channel crossings. Title text should sit at y=30 to avoid overlap.</li>
+                <li><strong>Middle Corridor (y: 320 - 350)</strong>: For lines connecting Depts/MCS and Verification Grid.</li>
+                <li><strong>Lower Corridor (y: 700 - 800)</strong>: For lines connecting to On-Premise Lower (SFTP, SMTP, DMIP).</li>
+                <li><strong>External Corridor (y: 980 - 1050)</strong>: For lines connecting to bottom External Partners.</li>
+            </ul>
+        </li>
+        <li><strong>Stack Detouring</strong>: In a vertically stacked set of components, do not route lines vertically straight through the stack. Detour them horizontally into a gap column and return to the target stack.</li>
+        <li><strong>Label Spacing & Staggering</strong>:
+            <ul>
+                <li>Space parallel corridor lines by at least 10px vertically.</li>
+                <li>Stagger the x-coordinates of text labels along parallel lines so their 15px tall background capsules do not overlap or collide with neighboring lines.</li>
+                <li>Every connection label (width="50", height="15") must be centered on the line path segment it represents.</li>
+            </ul>
+        </li>
+        <li><strong>Lifecycle color coding</strong>: New connections must be purple (#7d3c98) and use marker-end="url(#arrow-new)". Existing connections must be black/dark grey (#333) and use marker-end="url(#arrow)".</li>
+    </ul>
+
+    <h3>3.4. Structural Verification Checklist</h3>
+    <p>After compiling the SVG string, audit it against the input YAML metadata:</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Check</th>
+                <th>Criteria</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Node Parity</strong></td>
+                <td>Count every component in YAML. Does the SVG have exactly that number of rect or cylinder path elements?</td>
+            </tr>
+            <tr>
+                <td><strong>Distinct Instances</strong></td>
+                <td>Ensure multiple instances of the same name (like two EAPIs) have separate coordinates and labels.</td>
+            </tr>
+            <tr>
+                <td><strong>Connection Parity</strong></td>
+                <td>Verify every link in YAML has a corresponding path or line in the SVG.</td>
+            </tr>
+            <tr>
+                <td><strong>Collision Avoidance</strong></td>
+                <td>Check coordinates to ensure no lines intersect components, and labels are spaced out.</td>
+            </tr>
+            <tr>
+                <td><strong>No Hallucinations</strong></td>
+                <td>Verify no extra boxes or labels are rendered.</td>
+            </tr>
+        </tbody>
+    </table>
+
+</body>
+</html>

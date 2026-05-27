@@ -1,0 +1,67 @@
+# Acme Complex Integration Architecture Metadata Sample
+title: "Fund Transfer & Payment Clearing Flow"
+
+environments:
+  - id: customer_zone
+    name: "Customer Zone"
+    style: "blue dashed border, light background"
+  - id: acme_internal
+    name: "Acme Internal Network"
+    style: "grey solid border, light background"
+  - id: external_payment
+    name: "Payment Network (External)"
+    style: "purple solid border, light background"
+
+components:
+  - id: customer_app
+    name: "Customer Mobile App"
+    environment: customer_zone
+    lifecycle_status: "unchanged"
+    type: "channel"
+  - id: retail_portal
+    name: "Retail Web Portal"
+    environment: customer_zone
+    lifecycle_status: "unchanged"
+    type: "channel"
+  - id: api_gateway
+    name: "API Gateway"
+    environment: acme_internal
+    lifecycle_status: "updated" # yellow fill, blue border
+    type: "gateway"
+  - id: transfer_service
+    name: "Fund Transfer Service"
+    environment: acme_internal
+    lifecycle_status: "new" # purple border
+    type: "microservice"
+  - id: account_db
+    name: "Account Database"
+    environment: acme_internal
+    lifecycle_status: "unchanged"
+    type: "database" # Cylinder shape representation
+  - id: itmx_network
+    name: "ITMX Clearing Network"
+    environment: external_payment
+    lifecycle_status: "unchanged"
+    type: "external_partner"
+
+connections:
+  - from: customer_app
+    to: api_gateway
+    protocol: "HTTPS/REST"
+    status: "existing"
+  - from: retail_portal
+    to: api_gateway
+    protocol: "HTTPS/REST"
+    status: "existing"
+  - from: api_gateway
+    to: transfer_service
+    protocol: "gRPC"
+    status: "new"
+  - from: transfer_service
+    to: account_db
+    protocol: "JDBC"
+    status: "existing"
+  - from: transfer_service
+    to: itmx_network
+    protocol: "ISO 20022 REST"
+    status: "new"

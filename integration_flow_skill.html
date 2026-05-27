@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skill: Acme Integration Flow Diagram Agent (Subagent Delegation)</title>
+    <style>
+        :root {
+            --primary-color: #4A2E80;
+            --accent-color: #7D3C98;
+            --bg-color: #fcfcfd;
+            --text-color: #2c3e50;
+            --border-color: #dcdde1;
+            --code-bg: #f8f9fa;
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            padding: 40px 20px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1, h2, h3 {
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+        h1 {
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+            font-size: 2.2rem;
+            margin-top: 0;
+        }
+        h2 {
+            font-size: 1.5rem;
+            margin-top: 30px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        hr {
+            border: 0;
+            border-top: 1px solid var(--border-color);
+            margin: 30px 0;
+        }
+        p {
+            margin: 15px 0;
+        }
+        ul, ol {
+            margin: 15px 0;
+            padding-left: 25px;
+        }
+        li {
+            margin: 8px 0;
+        }
+        code {
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+            background-color: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #d63031;
+        }
+        pre {
+            background-color: var(--code-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+            border-radius: 0;
+            color: #2d3436;
+            font-size: 0.95em;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            font-size: 0.95em;
+        }
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 12px 15px;
+            text-align: left;
+        }
+        th {
+            background-color: #f1f2f6;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .header-meta {
+            font-size: 0.9em;
+            color: #7f8c8d;
+            background: #f1f2f6;
+            padding: 15px 20px;
+            border-radius: 6px;
+            margin-bottom: 30px;
+        }
+        .header-meta p {
+            margin: 5px 0;
+        }
+        .header-meta strong {
+            color: var(--primary-color);
+        }
+        .yaml-block {
+            border-left: 4px solid #f1c40f;
+        }
+        .prompt-block {
+            border-left: 4px solid var(--accent-color);
+        }
+        .config-block {
+            border-left: 4px solid #2ecc71;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-meta">
+        <p><strong>Name:</strong> integration-flow</p>
+        <p><strong>Description:</strong> Translates Acme enterprise architecture YAML metadata into a professional 2D integration flow diagram using a specialized diagram_designer subagent running on a preferred model.</p>
+    </div>
+
+    <h1>Skill: Acme Integration Flow Diagram Agent (Subagent Delegation)</h1>
+    <p>This skill enables the main agent to delegate the layout, visual generation, and visual QA auditing of enterprise integration diagrams to a specialized subagent (<code>diagram_designer</code>) configured to run on the user's preferred high-reasoning model.</p>
+
+    <hr>
+
+    <h2>1. User Setup: Model Override Configuration</h2>
+    <p>To ensure diagram generation and visual QA run on your preferred model (e.g., <code>gemini-3.1-pro</code>), you can configure the model override at either the <strong>workspace scope</strong> (recommended for git-sharing) or the <strong>global user scope</strong>:</p>
+    
+    <h3>Option A: Workspace Scope (Self-Contained & Git-Sharable)</h3>
+    <p>Create a <code>.gemini/settings.json</code> file inside your project root and add the following configuration. This allows the settings to be committed to git and shared with your team:</p>
+    <pre class="config-block"><code>{
+  "agents": {
+    "overrides": {
+      "diagram_designer": {
+        "modelConfig": {
+          "model": "gemini-3.1-pro"
+        }
+      }
+    }
+  }
+}</code></pre>
+
+    <h3>Option B: Global User Scope</h3>
+    <p>Alternatively, add the same JSON block to your global user <code>settings.json</code> (located at <code>~/.gemini/settings.json</code> or <code>~/.gemini/antigravity-cli/settings.json</code>).</p>
+
+    <hr>
+
+    <h2>2. Main Agent Playbook</h2>
+    <p>When the user triggers <code>/integration-flow &lt;metadata.yaml&gt; [output_image_name.png]</code>, the main agent must follow this protocol:</p>
+    <ol>
+        <li><strong>Read & Parse Input</strong>: Read the input YAML file.</li>
+        <li><strong>Define Subagent</strong>: Call <code>define_subagent</code> to define a specialized subagent:
+            <ul>
+                <li><strong>Name</strong>: <code>diagram_designer</code></li>
+                <li><strong>Description</strong>: "Enterprise architecture diagram generator and visual QA auditor."</li>
+                <li><strong>enable_write_tools</strong>: <code>true</code></li>
+                <li><strong>enable_mcp_tools</strong>: <code>true</code></li>
+                <li><strong>System Prompt</strong>: (Detailed below)</li>
+            </ul>
+        </li>
+        <li><strong>Invoke Subagent</strong>: Call <code>invoke_subagent</code> with the prompt passing the parsed YAML content and output file name.</li>
+        <li><strong>Await & Report</strong>: Wait for the subagent to report the diagram has been finalized and verified. Then, present the final output path to the user.</li>
+    </ol>
+
+    <hr>
+
+    <h2>3. Subagent System Prompt (diagram_designer)</h2>
+    <p>The <code>diagram_designer</code> subagent must adhere to the following core system prompt to generate and audit the diagram:</p>
+
+    <h3>3.1. Visual Registry Mapping Protocol (CRITICAL)</h3>
+    <p>Before calling <code>generate_image</code>, the subagent MUST list all components and lines in a text table to ensure a 1-to-1 visual check:</p>
+    <pre><code>Node Registry:
+- List every component, its container nesting, and style.
+Connection Registry:
+- List every connection, source, destination, protocol, and status.</code></pre>
+
+    <h3>3.2. Diagram Prompt Template Compiler</h3>
+    <p>Compile the metadata into the following image generation prompt:</p>
+    <pre class="prompt-block"><code>A professional, clean, 2D enterprise architecture diagram for Siam Commercial Bank (Acme). Flat corporate design language, no 3D, no realistic shadows, white background.
+- Title: '[YAML title]' in deep purple at top-left.
+- Layout & Containers: Define all zones and sub-containers. Nested groups must be placed entirely within parent boundaries.
+- Components: Databases must be 2D cylinders; other systems are rectangles. Color codes: new systems (white fill, purple border), updated (yellow fill, blue border), unchanged (white fill, black border).
+- Distinct Instances: Never merge or consolidate distinct components of the same name or type.
+- Strict Label Matching: Labels must exactly match the YAML name.
+- Connection Routing: Orthogonal 90-degree lines ONLY (no diagonals). Distinct arrowheads pointing in the data flow direction.
+- Arrowhead Terminus Constraint: Ensure every connector is clearly terminated with an arrowhead pointing directly to the target.
+- Legend: Define status-to-color mapping at the bottom.</code></pre>
+
+    <h3>3.3. Visual Verification & 1-to-1 Auditing Checklist</h3>
+    <p>Inspect each generated image using <code>view_file</code> and audit against this checklist:</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Check</th>
+                <th>Verification Criteria</th>
+                <th>Correction Action (If Failed)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Node Completeness</strong></td>
+                <td>Every node in the registry exists inside its correct container.</td>
+                <td>Add explicit coordinates or grouping descriptions to the layout section.</td>
+            </tr>
+            <tr>
+                <td><strong>Distinct Instances</strong></td>
+                <td>Duplicate nodes are drawn separately, not merged.</td>
+                <td>Add: "Draw exactly [count] distinct boxes for [node_name] side-by-side."</td>
+            </tr>
+            <tr>
+                <td><strong>Line Completeness</strong></td>
+                <td>All connections in the registry are present.</td>
+                <td>Re-describe the specific route with start/end node labels.</td>
+            </tr>
+            <tr>
+                <td><strong>Flow Arrowheads</strong></td>
+                <td>Every connection has a clear arrowhead pointing to the target.</td>
+                <td>Add: "Arrowhead must point towards [destination_node] at its entry point."</td>
+            </tr>
+            <tr>
+                <td><strong>Orthogonal Integrity</strong></td>
+                <td>All lines are 90-degree square elbows (NO diagonals).</td>
+                <td>Add: "STRICT constraint: route lines around boxes, NO diagonals under any circumstances."</td>
+            </tr>
+            <tr>
+                <td><strong>Branding & Highlights</strong></td>
+                <td>Text is legible. Gateway nodes have yellow fill.</td>
+                <td>Re-specify fill colors and hex code representations.</td>
+            </tr>
+        </tbody>
+    </table>
+    <p>Run the rendering and QA loop up to 5 times. If any checkpoint fails, refine the prompt to address the specific defect and re-generate. Only complete when all checkpoints pass or 5 iterations are reached.</p>
+
+</body>
+</html>
