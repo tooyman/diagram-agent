@@ -1,0 +1,467 @@
+# NLEADS Real-time Integration Architecture Metadata (Hierarchical Schema)
+title: "NLEADS - Real-time Integration Architecture"
+
+groups:
+  # Outer network zones
+  - id: techx_aws
+    name: "TechX AWS (Bank)"
+    style: "yellow dashed border, light background"
+  - id: acme_aws
+    name: "Acme AWS"
+    style: "yellow dashed border, light background"
+  - id: acme_azure
+    name: "Acme Azure"
+    style: "blue solid border, light background"
+  - id: acme_staff
+    name: "Acme Staff (Internal Access)"
+    style: "black solid border, light grey background"
+  - id: on_premise_upper
+    name: "On-Premise"
+    style: "grey solid border, light grey background"
+  - id: on_premise_lower
+    name: "On-Premise"
+    style: "grey solid border, light grey background"
+  - id: partner_3rd_party
+    name: "Partner / 3rd Party"
+    style: "purple solid border, light background"
+  - id: saas_cloud
+    name: "SaaS Cloud"
+    style: "purple solid border, light background"
+  - id: acme_huawei
+    name: "Acme Huawei"
+    style: "green solid border, light background"
+
+  # Inner nested sub-groups
+  - id: mainframe_1
+    name: "Mainframe"
+    style: "thin black border, white background"
+    parent: on_premise_upper
+  - id: mainframe_2
+    name: "Mainframe"
+    style: "thin black border, white background"
+    parent: on_premise_upper
+  - id: service_grid
+    name: "Service Grid"
+    style: "no border, clean layout"
+    parent: on_premise_upper
+  - id: depts_mcs
+    name: "Depts / MCS"
+    style: "thin black border, white background"
+    parent: on_premise_upper # upper right area
+  - id: verification_grid
+    name: "Verification Grid"
+    style: "thin grey border, white background"
+    parent: on_premise_upper # nested On-Premise (corrected semantic!)
+
+components:
+  # Channels & Clients
+  - id: acme_connect
+    name: "Acme Connect"
+    group: techx_aws
+    lifecycle_status: "unchanged"
+    type: "channel"
+  - id: acme_one
+    name: "Acme ONE"
+    group: acme_aws
+    lifecycle_status: "unchanged"
+    type: "channel"
+  - id: ast_tool
+    name: "Auto Sales Tools (AST)"
+    group: acme_azure
+    lifecycle_status: "unchanged"
+    type: "channel"
+  - id: call_center
+    name: "Call Center"
+    group: acme_staff
+    lifecycle_status: "unchanged"
+    type: "channel"
+  
+  # On-Premise Upper Gateways & Mainframe elements
+  - id: eapi_onprem_1
+    name: "EAPI"
+    group: on_premise_upper
+    lifecycle_status: "updated" # yellow fill
+    type: "gateway"
+  - id: eapi_onprem_2
+    name: "EAPI"
+    group: on_premise_upper
+    lifecycle_status: "updated" # yellow fill
+    type: "gateway"
+  - id: mq_broker_1
+    name: "MQ"
+    group: on_premise_upper
+    lifecycle_status: "unchanged"
+    type: "gateway"
+  - id: mq_broker_2
+    name: "MQ"
+    group: on_premise_upper
+    lifecycle_status: "unchanged"
+    type: "gateway"
+  - id: als
+    name: "ALS"
+    group: mainframe_1
+    lifecycle_status: "unchanged"
+    type: "mainframe"
+  - id: mg_cheque
+    name: "MG CHEQUE"
+    group: mainframe_1
+    lifecycle_status: "unchanged"
+    type: "mainframe"
+  - id: gn
+    name: "GN"
+    group: mainframe_1
+    lifecycle_status: "unchanged"
+    type: "mainframe"
+  - id: rm
+    name: "RM"
+    group: mainframe_2
+    lifecycle_status: "unchanged"
+    type: "mainframe"
+  - id: im_st
+    name: "IM/ST"
+    group: mainframe_2
+    lifecycle_status: "unchanged"
+    type: "mainframe"
+  - id: faat
+    name: "FAAT"
+    group: mainframe_2
+    lifecycle_status: "unchanged"
+    type: "mainframe"
+
+  # Service Grid inside On-Premise Upper (CRITICAL SEMANTIC FIX 2: Split into distinct components)
+  - id: estm
+    name: "ESTM"
+    group: service_grid
+    lifecycle_status: "unchanged"
+    type: "server"
+  - id: lhs
+    name: "LHS"
+    group: service_grid
+    lifecycle_status: "unchanged"
+    type: "server"
+  - id: ncb
+    name: "NCB"
+    group: service_grid
+    lifecycle_status: "unchanged"
+    type: "server"
+  - id: ncbos
+    name: "NCBOS"
+    group: service_grid
+    lifecycle_status: "unchanged"
+    type: "server"
+  - id: nss
+    name: "NSS"
+    group: service_grid
+    lifecycle_status: "unchanged"
+    type: "server"
+  - id: sfwh
+    name: "SFWH (Safewatch)"
+    group: service_grid
+    lifecycle_status: "unchanged"
+    type: "server"
+  - id: ref_data
+    name: "Reference Data"
+    group: service_grid
+    lifecycle_status: "unchanged"
+    type: "server"
+  - id: svaf
+    name: "SVAF"
+    group: service_grid
+    lifecycle_status: "unchanged"
+    type: "server"
+  - id: watch_list
+    name: "Watch List"
+    group: service_grid
+    lifecycle_status: "unchanged"
+    type: "server"
+  - id: actm
+    name: "ACTM"
+    group: service_grid
+    lifecycle_status: "new" # pink fill
+    type: "server"
+  - id: enlite
+    name: "ENLITE"
+    group: service_grid
+    lifecycle_status: "new" # pink fill
+    type: "server"
+
+  # On-Premise Lower Container
+  - id: sftp_server
+    name: "SFTP Server"
+    group: on_premise_lower
+    lifecycle_status: "unchanged"
+    type: "server"
+  - id: dmip_nleads
+    name: "DMIP-NLEADS"
+    group: on_premise_lower
+    lifecycle_status: "updated" # yellow fill
+    type: "server"
+  - id: ecm_autoloan
+    name: "ECM-AUTOLOAN + NLEADS"
+    group: on_premise_lower
+    lifecycle_status: "updated" # yellow fill
+    type: "server"
+  - id: smtp_custard
+    name: "SMTP Server CUSTARD"
+    group: on_premise_lower
+    lifecycle_status: "unchanged"
+    type: "server"
+  - id: smtp_zimba
+    name: "SMTP Server ZIMBA"
+    group: on_premise_lower
+    lifecycle_status: "unchanged"
+    type: "server"
+
+  # Depts / MCS (On-Premise Upper Right)
+  - id: ecm_unsecured
+    name: "ECM-UNSECURED"
+    group: depts_mcs
+    lifecycle_status: "unchanged"
+    type: "server"
+  - id: ecm_lead
+    name: "ECM-LEAD"
+    group: depts_mcs
+    lifecycle_status: "unchanged"
+    type: "server"
+  - id: fos
+    name: "FOS"
+    group: depts_mcs
+    lifecycle_status: "unchanged"
+    type: "server"
+
+  # Acme Azure Main Core & Middleware
+  - id: nleads_engine
+    name: "NLEADS"
+    group: acme_azure
+    lifecycle_status: "new" # large light blue fill
+    type: "core_engine"
+  - id: eapi_azure
+    name: "EAPI"
+    group: acme_azure
+    lifecycle_status: "updated" # yellow fill
+    type: "gateway"
+  - id: confluent_kafka
+    name: "Confluent Kafka"
+    group: acme_azure
+    lifecycle_status: "updated" # yellow fill
+    type: "gateway"
+  - id: e_kafka
+    name: "E-Kafka"
+    group: acme_azure
+    lifecycle_status: "updated" # yellow fill
+    type: "gateway"
+
+  # Acme Azure Verification Grid (On-Premise upper parent)
+  - id: ade
+    name: "ADE"
+    group: verification_grid
+    lifecycle_status: "unchanged"
+    type: "server"
+  - id: emv
+    name: "EMV"
+    group: verification_grid
+    lifecycle_status: "unchanged"
+    type: "server"
+  - id: nmsx
+    name: "NMSX (Replace Detica)"
+    group: verification_grid
+    lifecycle_status: "new" # pink fill
+    type: "server"
+
+  # Outbound Targets Bottom
+  - id: partner_eco
+    name: "Partner Eco"
+    group: techx_aws
+    lifecycle_status: "unchanged"
+    type: "external_partner"
+  - id: mitsubishi
+    name: "Mitsubishi"
+    group: partner_3rd_party
+    lifecycle_status: "unchanged"
+    type: "external_partner"
+  - id: deves
+    name: "Deves"
+    group: partner_3rd_party
+    lifecycle_status: "unchanged"
+    type: "external_partner"
+  - id: omakase
+    name: "Omakase Car"
+    group: partner_3rd_party
+    lifecycle_status: "unchanged"
+    type: "external_partner"
+  - id: dlt
+    name: "DLT"
+    group: partner_3rd_party
+    lifecycle_status: "unchanged"
+    type: "external_partner"
+  - id: icore
+    name: "iCore"
+    group: acme_huawei
+    lifecycle_status: "unchanged"
+    type: "external_partner"
+  - id: payroll
+    name: "BIPO Acme Payroll"
+    group: saas_cloud
+    lifecycle_status: "unchanged"
+    type: "external_partner"
+
+connections:
+  # Channels Input to distinct EAPI gateways
+  - from: acme_connect
+    to: eapi_onprem_1
+    protocol: "REST"
+    status: "existing"
+  - from: acme_one
+    to: eapi_onprem_2
+    protocol: "REST"
+    status: "existing"
+  - from: eapi_onprem_1
+    to: nleads_engine
+    protocol: "REST"
+    status: "existing"
+  - from: eapi_onprem_2
+    to: nleads_engine
+    protocol: "REST"
+    status: "existing"
+
+  # AST Client Inputs
+  - from: ast_tool
+    to: eapi_azure
+    protocol: "REST"
+    status: "existing"
+  - from: ast_tool
+    to: nleads_engine
+    protocol: "REST"
+    status: "existing"
+
+  # Call Center Input
+  - from: call_center
+    to: eapi_azure
+    protocol: "REST"
+    status: "existing"
+
+  # Async MQ Return Path
+  - from: eapi_onprem_1
+    to: mq_broker_1
+    protocol: "XML"
+    status: "existing"
+  - from: mq_broker_1
+    to: acme_connect
+    protocol: "MQ/XML"
+    status: "existing"
+
+  # On-Premise MQ integrations (Name labeled simply 'MQ' in diagram)
+  - from: nleads_engine
+    to: mq_broker_1
+    protocol: "XML"
+    status: "existing"
+  - from: mq_broker_1
+    to: als
+    protocol: "MQ"
+    status: "existing"
+  - from: nleads_engine
+    to: mq_broker_2
+    protocol: "XML"
+    status: "existing"
+  - from: mq_broker_2
+    to: rm
+    protocol: "MQ"
+    status: "existing"
+
+  # Kafka & E-Kafka Pub/Sub Flows
+  - from: nleads_engine
+    to: confluent_kafka
+    protocol: "Publish"
+    status: "new"
+  - from: nleads_engine
+    to: e_kafka
+    protocol: "Publish"
+    status: "new"
+  - from: confluent_kafka
+    to: ecm_autoloan
+    protocol: "Subscribe"
+    status: "new"
+  - from: e_kafka
+    to: ecm_autoloan
+    protocol: "Subscribe"
+    status: "new"
+
+  # Backend Servers Lower
+  - from: nleads_engine
+    to: sftp_server
+    protocol: "SFTP"
+    status: "existing"
+  - from: nleads_engine
+    to: smtp_custard
+    protocol: "SMTP"
+    status: "existing"
+  - from: nleads_engine
+    to: smtp_zimba
+    protocol: "SMTP"
+    status: "existing"
+  - from: nleads_engine
+    to: dmip_nleads
+    protocol: "REST"
+    status: "existing"
+
+  # SOAP Integrations to Depts/MCS
+  - from: nleads_engine
+    to: ecm_unsecured
+    protocol: "SOAP"
+    status: "new"
+  - from: nleads_engine
+    to: ecm_lead
+    protocol: "SOAP"
+    status: "new"
+  - from: nleads_engine
+    to: fos
+    protocol: "SOAP"
+    status: "new"
+
+  # Outbound Verifications (EAPI to Verification Grid nested On-Premise)
+  - from: nleads_engine
+    to: eapi_azure
+    protocol: "REST"
+    status: "existing"
+  - from: eapi_azure
+    to: ade
+    protocol: "REST"
+    status: "existing"
+  - from: eapi_azure
+    to: emv
+    protocol: "REST"
+    status: "existing"
+  - from: eapi_azure
+    to: nmsx
+    protocol: "REST"
+    status: "existing"
+
+  # Outbound Partners Bottom
+  - from: nleads_engine
+    to: partner_eco
+    protocol: "REST"
+    status: "existing"
+  - from: nleads_engine
+    to: mitsubishi
+    protocol: "REST"
+    status: "existing"
+  - from: nleads_engine
+    to: deves
+    protocol: "REST"
+    status: "existing"
+  - from: nleads_engine
+    to: omakase
+    protocol: "REST"
+    status: "existing"
+  - from: nleads_engine
+    to: dlt
+    protocol: "REST"
+    status: "existing"
+  - from: nleads_engine
+    to: icore
+    protocol: "XML"
+    status: "existing"
+  - from: nleads_engine
+    to: payroll
+    protocol: "REST"
+    status: "existing"

@@ -29,6 +29,8 @@ Outputs:
 | `.claude/skills/meta-diagram-svg/elk_helper/` | Node.js ELK runner |
 | `.claude/skills/meta-diagram-svg/reference/` | Schema docs + minimal example |
 | `examples/simple.yaml` | Minimal example metadata |
+| `.agents/skills/integration_flow*` | Earlier iterations (kept for history) |
+| `generated_diagrams/` | Output from earlier iterations |
 
 ## Pipeline
 

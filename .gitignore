@@ -15,5 +15,8 @@ output/
 # Claude Code local permission grants (per-machine)
 .claude/settings.local.json
 
+# Gemini local settings (from previous iteration)
+.gemini/
+
 # Sample user data (potentially sensitive — opt in by removing this line)
 nleads_metadata.yaml
