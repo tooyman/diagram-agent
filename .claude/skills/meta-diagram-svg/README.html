@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>meta-diagram-svg &middot; Claude skill</title>
+<style>
+  :root {
+    --bg: #FAFBFC;
+    --fg: #111827;
+    --muted: #6B7280;
+    --rule: #E5E7EB;
+    --card: #FFFFFF;
+    --accent: #2563EB;
+    --code-bg: #F3F4F6;
+    --warn: #FEF3C7;
+    --new: #FCE7F3;
+    --core: #DBEAFE;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--fg);
+               font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif; }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 48px 28px 96px; }
+  header { border-bottom: 1px solid var(--rule); padding-bottom: 24px; margin-bottom: 36px; }
+  .eyebrow { color: var(--muted); font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 8px; }
+  h1 { margin: 0 0 8px; font-size: 32px; letter-spacing: -0.01em; }
+  .tagline { color: var(--muted); font-size: 17px; margin: 0; max-width: 700px; }
+  h2 { margin: 48px 0 14px; font-size: 21px; letter-spacing: -0.005em; }
+  h3 { margin: 28px 0 10px; font-size: 16px; }
+  p { margin: 0 0 12px; }
+  ul, ol { padding-left: 22px; margin: 0 0 14px; }
+  li { margin-bottom: 4px; }
+  code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 13px;
+         background: var(--code-bg); padding: 1px 5px; border-radius: 3px; }
+  pre { background: var(--code-bg); padding: 14px 16px; border-radius: 6px; overflow-x: auto;
+        font: 13px/1.5 ui-monospace, "SF Mono", Menlo, Consolas, monospace; margin: 0 0 16px; }
+  pre code { background: transparent; padding: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0 18px; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 13px; }
+  .card { background: var(--card); border: 1px solid var(--rule); border-radius: 8px; padding: 20px 22px; margin: 16px 0; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 720px) { .grid-2 { grid-template-columns: 1fr; } }
+  .preview { background: var(--card); border: 1px solid var(--rule); border-radius: 8px; padding: 16px; }
+  .preview svg { width: 100%; height: auto; display: block; }
+  .pipeline { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0 18px; }
+  .pipeline .step { flex: 1 1 160px; background: var(--card); border: 1px solid var(--rule);
+                     border-radius: 6px; padding: 12px 14px; }
+  .pipeline .step .n { color: var(--muted); font-size: 12px; }
+  .pipeline .step .t { font-weight: 600; margin-top: 2px; }
+  .pipeline .step .d { color: var(--muted); font-size: 13px; margin-top: 4px; }
+  .swatch { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: -2px;
+            border: 1px solid #1F2937; margin-right: 6px; }
+  .sw-white  { background: #FFFFFF; }
+  .sw-yellow { background: var(--warn); }
+  .sw-pink   { background: var(--new); }
+  .sw-blue   { background: var(--core); }
+  .kbd { font-family: ui-monospace, monospace; font-size: 12px; padding: 1px 6px;
+         border: 1px solid var(--rule); border-radius: 3px; background: var(--card); }
+  .muted { color: var(--muted); }
+  footer { margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--rule);
+           color: var(--muted); font-size: 13px; }
+  .badge { display: inline-block; padding: 2px 8px; font-size: 12px; border-radius: 999px;
+           background: var(--code-bg); color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Claude skill &middot; project-local</div>
+  <h1>meta-diagram-svg</h1>
+  <p class="tagline">
+    Generates good-looking logical architecture diagrams from declarative YAML.
+    The LLM only writes schema-valid metadata &mdash; layout and rendering are deterministic.
+  </p>
+</header>
+
+<h2>Why this exists</h2>
+<p>
+  Asking an LLM to produce a diagram directly &mdash; either drawio XML, SVG coordinates,
+  or an image &mdash; fails reliably: bad alignment, lines overlapping shapes, ghost
+  components, edges that don&rsquo;t connect to anything. Multi-round visual verification
+  loops make it worse, not better, because the model has no objective gradient to follow.
+</p>
+<p>
+  This skill removes the LLM from the visual loop entirely. It produces only
+  a structured description (YAML); a deterministic pipeline does the geometry,
+  validates it numerically, and emits SVG.
+</p>
+
+<h2>Pipeline</h2>
+<div class="pipeline">
+  <div class="step"><div class="n">1</div><div class="t">LLM</div>
+    <div class="d">Emits YAML matching the schema. No coordinates.</div></div>
+  <div class="step"><div class="n">2</div><div class="t">Pydantic</div>
+    <div class="d">Validates structure &amp; references. Rejects bad input early.</div></div>
+  <div class="step"><div class="n">3</div><div class="t">ELK (Node.js)</div>
+    <div class="d">Layered + orthogonal layout, nested containers.</div></div>
+  <div class="step"><div class="n">4</div><div class="t">Validator</div>
+    <div class="d">Overlaps, edge-through-node, crossings, label hits. Retries with new params on hard fail.</div></div>
+  <div class="step"><div class="n">5</div><div class="t">SVG</div>
+    <div class="d">Per-type shapes, wrapped multi-line labels, design tokens.</div></div>
+  <div class="step"><div class="n">6</div><div class="t">HTML viewer</div>
+    <div class="d">Mousewheel zoom, drag pan, Fit button (Cmd/Ctrl+0).</div></div>
+</div>
+<p class="muted">
+  Stage 4 is the key insight. The retry loop has a deterministic gradient
+  (geometry checks return a number), so it actually converges &mdash; unlike asking
+  the LLM to &ldquo;look at the picture again and fix it.&rdquo;
+</p>
+
+<h2>Example output</h2>
+<div class="preview" id="preview">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1247 434" preserveAspectRatio="xMidYMid meet" font-family="Inter, system-ui, -apple-system, sans-serif">
+<rect width="100%" height="100%" fill="#FAFBFC"/>
+<defs><marker id="arrow-sync" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#1F2937"/></marker><marker id="arrow-async" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#1F2937"/></marker><marker id="arrow-data" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2563EB"/></marker></defs>
+<text x="28" y="54" font-size="22" font-weight="700" fill="#111827">Order processing (simple)</text>
+<g transform="translate(28,78)">
+<g><rect x="356.0" y="17.0" width="370.0" height="256.0" rx="10" fill="#F8FAFC" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="6,4"/><text x="372.0" y="39.0" font-size="14" font-weight="700" fill="#4B5563">Application tier</text></g>
+<g><rect x="885.0" y="12.0" width="294.0" height="176.0" rx="10" fill="#F8FAFC" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="6,4"/><text x="901.0" y="34.0" font-size="14" font-weight="700" fill="#4B5563">Data tier</text></g>
+<path d="M 195.0,119.0 L 351.0,118.5 L 524.0,118.5" fill="none" stroke="#1F2937" stroke-width="1.5" marker-end="url(#arrow-sync)"/>
+<path d="M 704.0,106.0 L 997.0,106.0" fill="none" stroke="#1F2937" stroke-width="1.5" marker-end="url(#arrow-sync)"/>
+<path d="M 704.0,131.0 L 766.0,131.0 L 766.0,291.0 L 202.0,291.0" fill="none" stroke="#1F2937" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#arrow-async)"/>
+<path d="M 202.0,266.0 L 212.0,266.0 L 212.0,214.0 L 351.0,213.5 L 524.0,213.5" fill="none" stroke="#1F2937" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#arrow-async)"/>
+<path d="M 704.0,213.5 L 731.0,214.0 L 776.0,214.0 L 776.0,136.0 L 997.0,136.0" fill="none" stroke="#1F2937" stroke-width="1.5" marker-end="url(#arrow-sync)"/>
+<g><rect x="524.0" y="81.0" width="180.0" height="75.0" rx="6" fill="#FFFFFF" stroke="#1F2937" stroke-width="1.5"/><text text-anchor="middle" font-size="14" font-weight="400" fill="#111827"><tspan x="614.0" y="123.3">Order API</tspan></text></g>
+<g><rect x="524.0" y="176.0" width="180.0" height="75.0" rx="6" fill="#FCE7F3" stroke="#1F2937" stroke-width="1.5"/><text text-anchor="middle" font-size="14" font-weight="400" fill="#111827"><tspan x="614.0" y="218.3">Fulfillment Worker</tspan></text></g>
+<g><path d="M 997.0,85.0 A 80.0,9 0 0 0 1157.0,85.0 L 1157.0,157.0 A 80.0,9 0 0 1 997.0,157.0 Z" fill="#FFFFFF" stroke="#1F2937" stroke-width="1.5"/><ellipse cx="1077.0" cy="85.0" rx="80.0" ry="9" fill="#FFFFFF" stroke="#1F2937" stroke-width="1.5"/><text text-anchor="middle" font-size="14" font-weight="400" fill="#111827"><tspan x="1077.0" y="132.3">Orders DB</tspan></text></g>
+<g><circle cx="135.0" cy="80.0" r="9" fill="#FFFFFF" stroke="#1F2937" stroke-width="1.5"/><line x1="135.0" y1="89.0" x2="135.0" y2="110.0" stroke="#1F2937" stroke-width="1.5"/><line x1="124.0" y1="97.0" x2="146.0" y2="97.0" stroke="#1F2937" stroke-width="1.5"/><line x1="135.0" y1="110.0" x2="126.0" y2="126.0" stroke="#1F2937" stroke-width="1.5"/><line x1="135.0" y1="110.0" x2="144.0" y2="126.0" stroke="#1F2937" stroke-width="1.5"/><text text-anchor="middle" font-size="13" font-weight="400" fill="#111827"><tspan x="135.0" y="154.4">Customer</tspan></text></g>
+<g><rect x="12.0" y="241.0" width="190.0" height="75.0" rx="3" fill="#FEF3C7" stroke="#1F2937" stroke-width="1.5"/><line x1="75.3" y1="241.0" x2="75.3" y2="316.0" stroke="#1F2937" stroke-width="1"/><line x1="138.7" y1="241.0" x2="138.7" y2="316.0" stroke="#1F2937" stroke-width="1"/><text text-anchor="middle" font-size="14" font-weight="400" fill="#111827"><tspan x="107.0" y="283.3">Order events</tspan></text></g>
+<g><rect x="247.0" y="119.0" width="52.0" height="21.0" fill="#FFFFFF" fill-opacity="0.95" rx="3"/><text x="273.0" y="134.0" text-anchor="middle" font-size="12" fill="#111827">HTTPS</text></g>
+<g><rect x="783.0" y="85.0" width="45.0" height="21.0" fill="#FFFFFF" fill-opacity="0.95" rx="3"/><text x="805.5" y="100.0" text-anchor="middle" font-size="12" fill="#111827">REST</text></g>
+<g><rect x="693.0" y="291.0" width="66.0" height="21.0" fill="#FFFFFF" fill-opacity="0.95" rx="3"/><text x="726.0" y="306.0" text-anchor="middle" font-size="12" fill="#111827">Publish</text></g>
+<g><rect x="219.0" y="193.0" width="80.0" height="21.0" fill="#FFFFFF" fill-opacity="0.95" rx="3"/><text x="259.0" y="208.0" text-anchor="middle" font-size="12" fill="#111827">Subscribe</text></g>
+<g><rect x="783.0" y="136.0" width="45.0" height="21.0" fill="#FFFFFF" fill-opacity="0.95" rx="3"/><text x="805.5" y="151.0" text-anchor="middle" font-size="12" fill="#111827">REST</text></g>
+</g></svg>
+</div>
+<p class="muted">
+  Rendered from <code>reference/example.yaml</code>. Notice: dashed lines for async
+  (<code>Publish</code> / <code>Subscribe</code>), solid for sync (<code>REST</code> / <code>HTTPS</code>),
+  light pink fill for <code>lifecycle_status: new</code> (Fulfillment Worker),
+  light yellow for <code>updated</code> (Order events).
+</p>
+
+<h2>Schema at a glance</h2>
+<pre><code>title: "Order processing (simple)"
+
+groups:                          # nestable via `parent`
+  - id: app
+    name: "Application tier"
+  - id: data
+    name: "Data tier"
+
+components:
+  - id: api
+    name: "Order API"
+    group: app
+    type: server                 # see vocab below
+    lifecycle_status: unchanged  # unchanged | updated | new
+
+connections:
+  - from: api
+    to: db
+    protocol: REST               # see protocol routing below
+    status: existing             # existing | new
+</code></pre>
+
+<div class="grid-2">
+  <div>
+    <h3>type vocabulary</h3>
+    <table>
+      <tr><th>value</th><th>shape</th></tr>
+      <tr><td><code>actor</code></td><td>Stick figure</td></tr>
+      <tr><td><code>channel</code></td><td>Rounded rect (user-facing)</td></tr>
+      <tr><td><code>gateway</code></td><td>Hexagon</td></tr>
+      <tr><td><code>server</code></td><td>Rounded rect (default)</td></tr>
+      <tr><td><code>core_engine</code></td><td>Bold rect, blue fill</td></tr>
+      <tr><td><code>mainframe</code></td><td>Folded-corner rect</td></tr>
+      <tr><td><code>datastore</code></td><td>Cylinder</td></tr>
+      <tr><td><code>queue</code></td><td>Divided rect</td></tr>
+      <tr><td><code>external_partner</code></td><td>Double-border rect</td></tr>
+    </table>
+  </div>
+  <div>
+    <h3>lifecycle &amp; protocol</h3>
+    <p style="margin-bottom:6px"><strong>lifecycle_status</strong> drives node fill:</p>
+    <p style="margin:0 0 12px">
+      <span class="swatch sw-white"></span><code>unchanged</code> &middot;
+      <span class="swatch sw-yellow"></span><code>updated</code> &middot;
+      <span class="swatch sw-pink"></span><code>new</code> &middot;
+      <span class="swatch sw-blue"></span><code>core_engine</code> override
+    </p>
+    <p style="margin-bottom:6px"><strong>protocol</strong> drives edge style:</p>
+    <table>
+      <tr><td>solid black</td><td><code>REST SOAP HTTPS gRPC</code></td></tr>
+      <tr><td>dashed black</td><td><code>MQ Kafka Publish Subscribe</code></td></tr>
+      <tr><td>solid blue</td><td><code>SFTP SMTP XML</code></td></tr>
+    </table>
+  </div>
+</div>
+
+<h2>Quick start</h2>
+<p>The skill is self-contained. One-time install:</p>
+<pre><code>.claude/skills/meta-diagram-svg/setup.sh</code></pre>
+<p class="muted">Creates a bundled <code>.venv/</code> and runs <code>npm install</code> inside the skill folder. Requires <code>python3</code> and <code>node</code> on PATH.</p>
+
+<p>Generate a diagram (paths are relative to your CWD):</p>
+<pre><code>.claude/skills/meta-diagram-svg/run.sh nleads_metadata.yaml -o output/nleads.svg</code></pre>
+
+<p>Two files are written:</p>
+<ul>
+  <li><code>output/nleads.svg</code> &mdash; the raw SVG (scales in any browser)</li>
+  <li><code>output/nleads.html</code> &mdash; viewer with pan/zoom (scroll, drag, <span class="kbd">Cmd&nbsp;0</span>)</li>
+</ul>
+
+<h3>Validator behavior</h3>
+<p>
+  Geometry checks run after layout. <strong>Hard failures</strong> &mdash; node overlap,
+  edge crossing a node, group overflow, excessive edge crossings &mdash; trigger automatic
+  retries with adjusted ELK parameters (up to 5). The retry loop is purely deterministic;
+  the LLM is never involved.
+</p>
+
+<h2>File layout</h2>
+<p class="muted">The skill bundles the entire generator. Nothing at the project root is required for it to run.</p>
+<pre><code>.claude/skills/meta-diagram-svg/
+├── SKILL.md                  # skill definition (frontmatter + how-to-use)
+├── README.html               # this page
+├── setup.sh                  # one-shot install (python venv + npm)
+├── run.sh                    # runner — call this
+├── requirements.txt
+├── .venv/                    # created by setup.sh
+├── src/                      # the Python pipeline
+│   ├── schema.py             # pydantic models, closed vocabs
+│   ├── transformer.py        # metadata → ELK JSON
+│   ├── layout.py             # subprocess into elk_helper
+│   ├── render.py             # SVG + HTML viewer
+│   ├── validator.py          # geometry checks
+│   ├── textlayout.py         # word wrap + per-type node profiles
+│   └── cli.py                # entrypoint + retry loop
+├── elk_helper/               # Node.js ELK runner
+│   ├── layout.js             # stdin → ELK → stdout
+│   ├── package.json
+│   └── node_modules/         # created by setup.sh
+└── reference/
+    ├── schema.md             # full schema reference
+    └── example.yaml          # minimal 5-node example</code></pre>
+
+<h2>What the LLM should and shouldn&rsquo;t do</h2>
+<div class="card">
+  <h3 style="margin-top:0">Do</h3>
+  <ul>
+    <li>Read user input (prose / notes / table) and extract components, groups, connections.</li>
+    <li>Pick <code>type</code> values from the closed vocabulary.</li>
+    <li>Use stable <code>id</code> values (snake_case, no spaces).</li>
+    <li>Reference existing components by <code>id</code> in <code>from</code>/<code>to</code>.</li>
+    <li>Run the CLI and report the output paths plus any validator warnings.</li>
+  </ul>
+</div>
+<div class="card">
+  <h3 style="margin-top:0">Don&rsquo;t</h3>
+  <ul>
+    <li>Produce SVG, drawio XML, coordinates, or anything pixel-related.</li>
+    <li>Visually verify the output and try to &ldquo;fix&rdquo; it &mdash; that&rsquo;s the validator&rsquo;s job.</li>
+    <li>Invent new <code>type</code> / <code>lifecycle_status</code> / <code>status</code> values.</li>
+    <li>Add cloud-provider icons or vendor-specific shapes (this is a <em>logical</em> diagram tool).</li>
+  </ul>
+</div>
+
+<footer>
+  <span class="badge">skill</span>
+  <span class="badge">project-local</span>
+  Schema reference: <code>reference/schema.md</code> &middot;
+  Minimal example: <code>reference/example.yaml</code>
+</footer>
+
+</div>
+</body>
+</html>

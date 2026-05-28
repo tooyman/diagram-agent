@@ -1,0 +1,9 @@
+{
+  "name": "elk-helper",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ELK layout helper invoked via subprocess",
+  "dependencies": {
+    "elkjs": "^0.9.3"
+  }
+}

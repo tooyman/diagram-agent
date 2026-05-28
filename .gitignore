@@ -1,0 +1,19 @@
+# Mac
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Node
+node_modules/
+
+# Build / outputs
+output/
+
+# Claude Code local permission grants (per-machine)
+.claude/settings.local.json
+
+# Sample user data (potentially sensitive — opt in by removing this line)
+nleads_metadata.yaml

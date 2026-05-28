@@ -1,0 +1,47 @@
+title: "Order processing (simple)"
+
+groups:
+  - id: app
+    name: "Application tier"
+  - id: data
+    name: "Data tier"
+
+components:
+  - id: user
+    name: "Customer"
+    type: actor
+  - id: api
+    name: "Order API"
+    group: app
+    type: server
+    lifecycle_status: unchanged
+  - id: worker
+    name: "Fulfillment Worker"
+    group: app
+    type: server
+    lifecycle_status: new
+  - id: queue
+    name: "Order events"
+    type: queue
+    lifecycle_status: updated
+  - id: db
+    name: "Orders DB"
+    group: data
+    type: datastore
+
+connections:
+  - from: user
+    to: api
+    protocol: HTTPS
+  - from: api
+    to: db
+    protocol: REST
+  - from: api
+    to: queue
+    protocol: Publish
+  - from: queue
+    to: worker
+    protocol: Subscribe
+  - from: worker
+    to: db
+    protocol: REST
