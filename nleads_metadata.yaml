@@ -405,16 +405,10 @@ connections:
     status: "existing"
 
   # SOAP Integrations to Depts/MCS
+  # Collapsed: NLEADS connects to every component in depts_mcs (ecm_unsecured, ecm_lead,
+  # fos) over SOAP/new, so the three edges are drawn as one edge to the group boundary.
   - from: nleads_engine
-    to: ecm_unsecured
-    protocol: "SOAP"
-    status: "new"
-  - from: nleads_engine
-    to: ecm_lead
-    protocol: "SOAP"
-    status: "new"
-  - from: nleads_engine
-    to: fos
+    to: depts_mcs
     protocol: "SOAP"
     status: "new"
 
@@ -423,38 +417,23 @@ connections:
     to: eapi_azure
     protocol: "REST"
     status: "existing"
+  # Collapsed: EAPI connects to every component in verification_grid (ade, emv, nmsx)
+  # over REST, so the three edges are drawn as one edge to the group boundary.
   - from: eapi_azure
-    to: ade
-    protocol: "REST"
-    status: "existing"
-  - from: eapi_azure
-    to: emv
-    protocol: "REST"
-    status: "existing"
-  - from: eapi_azure
-    to: nmsx
+    to: verification_grid
     protocol: "REST"
     status: "existing"
 
   # Outbound Partners Bottom
+  # partner_eco lives in techx_aws (not partner_3rd_party), so it stays an individual edge.
   - from: nleads_engine
     to: partner_eco
     protocol: "REST"
     status: "existing"
+  # Collapsed: NLEADS connects to every component in partner_3rd_party (mitsubishi, deves,
+  # omakase, dlt) over REST, so the four edges are drawn as one edge to the group boundary.
   - from: nleads_engine
-    to: mitsubishi
-    protocol: "REST"
-    status: "existing"
-  - from: nleads_engine
-    to: deves
-    protocol: "REST"
-    status: "existing"
-  - from: nleads_engine
-    to: omakase
-    protocol: "REST"
-    status: "existing"
-  - from: nleads_engine
-    to: dlt
+    to: partner_3rd_party
     protocol: "REST"
     status: "existing"
   - from: nleads_engine

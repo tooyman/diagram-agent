@@ -169,6 +169,45 @@ def _segments_cross(a: Segment, b: Segment) -> bool:
     return hx1 < vx < hx2 and vy1 < hy < vy2
 
 
+def _count_crossings_from_segs(all_segs: list[tuple[str, Segment]]) -> int:
+    crossings = 0
+    for i, (id1, s1) in enumerate(all_segs):
+        for id2, s2 in all_segs[i + 1 :]:
+            if id1 == id2:
+                continue
+            if _segments_cross(s1, s2):
+                crossings += 1
+    return crossings
+
+
+def count_crossings(elk_result: dict) -> int:
+    """Total orthogonal edge crossings in a laid-out graph (used by the repair pass)."""
+    all_segs: list[tuple[str, Segment]] = []
+    for edge, cx, cy in _walk_edges(elk_result):
+        for seg, _, _ in _edge_segments(edge, cx, cy):
+            all_segs.append((edge["id"], seg))
+    return _count_crossings_from_segs(all_segs)
+
+
+def fill_ratio(elk_result: dict, diagram: Diagram) -> float:
+    """Σ(node area) / canvas area. Higher = denser = less wasted whitespace."""
+    comp_ids = {c.id for c in diagram.components}
+    node_rects = _walk_node_rects(elk_result, comp_ids)
+    node_area = sum(w * h for _, (_, _, w, h) in node_rects)
+    w = elk_result.get("width", 1) or 1
+    h = elk_result.get("height", 1) or 1
+    canvas = w * h
+    return node_area / canvas if canvas else 0.0
+
+
+# Public aliases for geometry primitives reused by the edge-repair pass (src/reroute.py).
+walk_node_rects = _walk_node_rects
+walk_edges = _walk_edges
+edge_segments = _edge_segments
+segment_intersects_rect = _segment_intersects_rect
+segments_cross = _segments_cross
+
+
 def validate_geometry(
     elk_result: dict,
     diagram: Diagram,
@@ -220,13 +259,7 @@ def validate_geometry(
     for edge, cx, cy in edges:
         for seg, _, _ in _edge_segments(edge, cx, cy):
             all_segs.append((edge["id"], seg))
-    crossings = 0
-    for i, (id1, s1) in enumerate(all_segs):
-        for id2, s2 in all_segs[i + 1 :]:
-            if id1 == id2:
-                continue
-            if _segments_cross(s1, s2):
-                crossings += 1
+    crossings = _count_crossings_from_segs(all_segs)
     if crossings > crossings_fail:
         issues.append(Issue("edge_crossings", f"{crossings} edge crossings (fail > {crossings_fail})"))
     elif crossings > crossings_warn:

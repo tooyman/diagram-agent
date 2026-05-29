@@ -1,0 +1,95 @@
+title: "Located layout demo (compass hints)"
+
+# Demonstrates the optional `location` compass hint. The hint is a *soft* anchor:
+#   horizontal band  west -> first column,  east -> last column,  center -> natural flow
+#   vertical band    north -> top of its column,  south -> bottom,  middle -> centred
+# Omit `location` entirely => fully free placement (today's default behaviour).
+#
+# Design intent: actor on the LEFT (it's the true source), channels follow naturally,
+# the core engine sits in the MIDDLE, the data stores anchor to the RIGHT, and the
+# cross-cutting SMTP / log servers drop to the BOTTOM.
+#
+# IMPORTANT lesson baked into this example: `west` maps to ELK's FIRST layer (literally
+# column 0 — nothing can precede it). So only the *true source* gets `west`; the channel
+# tier is left unpinned and flows into column 1 on its own. Pinning a whole source->...->
+# sink chain to `west` would collapse those columns and create backward-routed spaghetti.
+
+groups:
+  - id: channels
+    name: "Channels"
+  - id: downstream
+    name: "Downstream systems"
+    location: east
+
+components:
+  - id: customer
+    name: "Customer"
+    type: actor
+    location: west
+
+  - id: web
+    name: "Web app"
+    group: channels
+    type: channel
+  - id: mobile
+    name: "Mobile app"
+    group: channels
+    type: channel
+
+  - id: gateway
+    name: "API Gateway"
+    type: gateway
+
+  - id: core
+    name: "Core Banking Engine"
+    type: core_engine
+    location: center
+
+  - id: lake
+    name: "Data Lake"
+    group: downstream
+    type: datastore
+    location: north_east
+  - id: warehouse
+    name: "Reporting Warehouse"
+    group: downstream
+    type: datastore
+    location: east
+
+  - id: smtp
+    name: "SMTP Server"
+    type: server
+    location: south
+  - id: logsvr
+    name: "Log Server"
+    type: server
+    location: south
+
+connections:
+  - from: customer
+    to: web
+    protocol: HTTPS
+  - from: customer
+    to: mobile
+    protocol: HTTPS
+  - from: web
+    to: gateway
+    protocol: REST
+  - from: mobile
+    to: gateway
+    protocol: REST
+  - from: gateway
+    to: core
+    protocol: REST
+  - from: core
+    to: lake
+    protocol: SFTP
+  - from: core
+    to: warehouse
+    protocol: SFTP
+  - from: core
+    to: smtp
+    protocol: SMTP
+  - from: core
+    to: logsvr
+    protocol: XML

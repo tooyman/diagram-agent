@@ -47,6 +47,7 @@ groups:                                # nestable via `parent`
   - id: data_tier
     name: "Data tier"
     parent: null                       # or another group id
+    location: east                     # optional compass hint (see below)
 
 components:
   - id: order_api
@@ -54,12 +55,16 @@ components:
     group: app_tier                    # optional; null = top-level
     type: server                       # see vocab below
     lifecycle_status: unchanged        # unchanged | updated | new
+    location: west                     # optional compass hint (see below)
 
 connections:
   - from: order_api
     to: orders_db
     protocol: REST                     # see protocol routing below
     status: existing                   # existing | new
+  - from: order_api
+    to: data_tier                      # endpoint may be a GROUP id: edge attaches to the
+    protocol: MQ                       # group's boundary (component↔group or group↔group)
 ```
 
 ### Closed vocabularies
@@ -89,26 +94,61 @@ connections:
 - Blue line (data): `SFTP`, `SMTP`, `XML`
 - Anything else → solid (sync default)
 
+### `location` — optional layout hint (groups & components)
+
+A coarse 3×3 **compass** anchor for macro layout control ("channels left, data lake
+right, logging at the bottom"). **Optional** — omit it for fully automatic placement.
+Values: `north_west north north_east west center east south_west south south_east`.
+
+- **Horizontal** is a hard column pin: `west*` → first column, `east*` → last column,
+  `center`/`north`/`south` → no horizontal force (natural flow).
+- **Vertical** is a soft ordering seed: `north*` → top, `south*` → bottom, middle band → centred.
+- It only activates when ≥1 node carries a `location`; otherwise behaviour is unchanged.
+- **Put `west` on a true source and `east` on a true sink** — `west` is literally column 0
+  (nothing precedes it). Pinning a whole source→…→sink chain to `west` collapses columns
+  into spaghetti; pin the entry tier only and let the rest flow.
+
+Full table + worked example: `reference/schema.md` (Location hints) and `reference/located.yaml`.
+
 ## Pipeline
 
 ```
-YAML → pydantic validation → metadata-to-ELK JSON
+YAML → pydantic validation → metadata-to-ELK JSON (compact spacing + optional location hints)
      → Node.js elkjs subprocess (layered, orthogonal, INCLUDE_CHILDREN)
-     → geometry validator (overlap, edge-through-node, crossings, label collision)
+     → geometry validator (overlap, edge-through-node, crossings, label collision, fill ratio)
+     → targeted edge-through-node repair (reroute ugly lines, spend crossing quota)
      → SVG renderer (multi-line wrapped labels, per-type shapes)
      → HTML viewer wrapper (mousewheel zoom, drag pan, Fit button)
 ```
 
-If hard geometry failures (node overlap, edge-through-node, group overflow, excess crossings) are detected, the CLI retries layout with progressively bigger spacings / different placement strategy (up to 5 retries). The LLM is **never** in this retry loop.
+When an edge is routed straight *through* a node, a repair pass reroutes just that segment
+around the obstacle, "spending" from the crossing budget (default 10) rather than spreading
+the whole diagram out — this keeps layouts compact. Only if hard failures *survive* repair
+(node overlap, group overflow, excess crossings, or an unrepairable through-node) does the
+CLI fall back to retrying layout with progressively bigger spacings / a different placement
+strategy (up to 5 retries). The LLM is **never** in this retry loop.
+
+**Wraparound control is handled by ELK itself, not a post-pass.** ELK can route an edge
+(classically a backward edge into a high-degree hub) the long way around the canvas border
+when the direct lane is blocked by the boxes in the middle. Rather than rewrite such edges
+afterwards (which fights ELK's port/arrowhead placement), the base layout options in
+`default_layout_opts()` are tuned so ELK's own router produces shorter routes:
+`nodePlacement.strategy = BRANDES_KOEPF` (ELK's default; packs layers tighter so backward
+edges don't have to loop the border) and `considerModelOrder.strategy = NONE` (frees
+crossing-minimization from input order to shorten edges). On the NLEADS hub-and-spoke this
+shrinks canvas area ~14% and cuts the worst detour ratio from ~3.8× to ~2.7× with no extra
+crossings. These are coarse whole-graph levers — every node, endpoint, and arrowhead stays
+exactly where ELK places it.
 
 ## CLI flags
 
 ```
-run.sh <input.yaml> [-o OUTPUT_PATH] [--no-retry] [--quiet]
+run.sh <input.yaml> [-o OUTPUT_PATH] [--no-retry] [--crossing-budget N] [--quiet]
 ```
 
 - Default output: `output/diagram.svg` (HTML viewer written as `.html` alongside).
-- `--no-retry`: run layout once, skip validator-driven retries.
+- `--no-retry`: run layout once, skip validator-driven retries (edge repair still runs).
+- `--crossing-budget N`: max edge crossings the ugly-line (edge-through-node) repair may spend (default 10).
 
 ## Bundled layout
 
@@ -127,16 +167,18 @@ This skill is self-contained — no files at the project root are required.
 │   ├── transformer.py       # metadata → ELK JSON
 │   ├── layout.py            # subprocess to elk_helper
 │   ├── render.py            # SVG + HTML viewer
-│   ├── validator.py         # geometry checks
+│   ├── validator.py         # geometry checks + fill_ratio + crossing count
+│   ├── reroute.py           # targeted edge-through-node repair
 │   ├── textlayout.py        # word wrap + per-type sizing
-│   └── cli.py               # entrypoint + retry loop
+│   └── cli.py               # entrypoint + repair/retry loop
 ├── elk_helper/              # Node.js ELK runner
 │   ├── layout.js
 │   ├── package.json
 │   └── node_modules/        # created by setup.sh
 └── reference/
     ├── schema.md            # full field-by-field schema
-    └── example.yaml         # minimal 5-node example
+    ├── example.yaml         # minimal 5-node example
+    └── located.yaml         # compass `location` hint demo
 
 ## Important constraints
 
@@ -144,3 +186,6 @@ This skill is self-contained — no files at the project root are required.
 - **Never put the LLM in a visual-verification loop.** The validator handles that deterministically.
 - **Closed vocabularies matter.** Unknown enum values for `type`, `lifecycle_status`, or `status` will fail schema validation.
 - **Component IDs must be unique and referenced consistently** in `group`, `from`, `to`, `parent`.
+- **A connection endpoint (`from`/`to`) may be a component *or* a group id.** Naming a group
+  attaches the edge to that zone's boundary (component↔group or group↔group). Group and
+  component ids must not collide, since endpoints resolve against both id-spaces.

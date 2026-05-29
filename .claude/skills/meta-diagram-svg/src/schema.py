@@ -16,6 +16,25 @@ class GroupKind(str, Enum):
     generic = "generic"
 
 
+class Location(str, Enum):
+    """Optional, soft 3x3 compass anchor for macro placement.
+
+    Decomposes into a horizontal band (west / none / east -> ELK layer constraint)
+    and a vertical band (north / middle / south -> in-layer y-seed). A coarse hint,
+    not an exact grid: tagged nodes are *pulled* toward their region; untagged nodes
+    flow naturally.
+    """
+    north_west = "north_west"
+    north = "north"
+    north_east = "north_east"
+    west = "west"
+    center = "center"
+    east = "east"
+    south_west = "south_west"
+    south = "south"
+    south_east = "south_east"
+
+
 class ComponentType(str, Enum):
     channel = "channel"
     gateway = "gateway"
@@ -67,6 +86,7 @@ class Group(BaseModel):
     name: str
     parent: Optional[str] = None
     kind: GroupKind = GroupKind.generic
+    location: Optional[Location] = None
 
 
 class Component(BaseModel):
@@ -76,6 +96,7 @@ class Component(BaseModel):
     group: Optional[str] = None
     type: ComponentType = ComponentType.server
     lifecycle_status: LifecycleStatus = LifecycleStatus.unchanged
+    location: Optional[Location] = None
 
 
 class Connection(BaseModel):
@@ -104,6 +125,15 @@ class Diagram(BaseModel):
         group_ids = {g.id for g in self.groups}
         comp_ids = {c.id for c in self.components}
 
+        # Connection endpoints now resolve against the union of both id-spaces, so an id
+        # shared by a group and a component would be ambiguous. Forbid the collision.
+        shared = group_ids & comp_ids
+        if shared:
+            raise ValueError(
+                f"id(s) used by both a group and a component (must be unique): "
+                f"{sorted(shared)}"
+            )
+
         for g in self.groups:
             if g.parent and g.parent not in group_ids:
                 raise ValueError(f"Group '{g.id}' references unknown parent '{g.parent}'")
@@ -112,11 +142,18 @@ class Diagram(BaseModel):
             if c.group and c.group not in group_ids:
                 raise ValueError(f"Component '{c.id}' references unknown group '{c.group}'")
 
+        # A connection endpoint may be a component OR a group (a group endpoint attaches
+        # the edge to the group's boundary).
+        endpoint_ids = comp_ids | group_ids
         for conn in self.connections:
-            if conn.from_ not in comp_ids:
-                raise ValueError(f"Connection from '{conn.from_}' references unknown component")
-            if conn.to not in comp_ids:
-                raise ValueError(f"Connection to '{conn.to}' references unknown component")
+            if conn.from_ not in endpoint_ids:
+                raise ValueError(
+                    f"Connection from '{conn.from_}' references unknown component or group"
+                )
+            if conn.to not in endpoint_ids:
+                raise ValueError(
+                    f"Connection to '{conn.to}' references unknown component or group"
+                )
 
         return self
 
